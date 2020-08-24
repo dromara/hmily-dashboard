@@ -4,7 +4,7 @@
         <div class="table_container">
             <div style="margin-top: 15px;margin-bottom: 10px;display: flex;justify-content: flex-start">
                 <div style="margin-left: 2%">
-                    <el-select v-model="selected" placeholder="请选择Namespace">
+                    <el-select v-model="selected" placeholder="请选择应用名">
                         <el-option
                                 v-for="x in options"
                                 :key="x"
@@ -13,16 +13,46 @@
                         </el-option>
                     </el-select>
                 </div>
-                <div style="width: 10rem;margin-left: 2%">
-                    <el-input v-model="retryCount" placeholder="请输入重试次数"></el-input>
+                <div style="margin-left: 2%">
+                    <el-select v-model="transType" placeholder="事务模式">
+                        <el-option
+                                v-for="x in typeLists"
+                                :key="x"
+                                :label="x"
+                                :value="x">
+                        </el-option>
+                    </el-select>
                 </div>
-                <div style="width: 10rem;margin-left: 2%">
-                    <el-input v-model="transId" placeholder="请输入事务ID"></el-input>
+                <div style="margin-left: 2%">
+                    <el-select v-model="status" placeholder="事务状态">
+                        <el-option
+                                v-for="x in statusLists"
+                                :key="x"
+                                :label="x"
+                                :value="x">
+                        </el-option>
+                    </el-select>
                 </div>
                 <div style="margin-left: 2%">
                     <el-button @click="query">查询</el-button>
                 </div>
                 <div style="clear:both"></div>
+            </div>
+            <div style="margin-top: 15px;margin-bottom: 10px;display: flex;justify-content: flex-start">
+                <div style="margin-left: 2%">
+                    <el-date-picker v-model="createTime" type="datetime" placeholder="选择时间"
+                                    value-format="yyyy-MM-dd HH:mm"
+                                    format="yyyy-MM-dd HH:mm">
+
+                    </el-date-picker>
+                </div>
+                <div style="margin-left: 2%">
+                    <el-date-picker v-model="updateTime" type="datetime" placeholder="选择时间"
+                                    value-format="yyyy-MM-dd HH:mm"
+                                    format="yyyy-MM-dd HH:mm">
+
+                    </el-date-picker>
+                </div>
             </div>
             <el-table
                     :border=true
@@ -31,77 +61,170 @@
                     highlight-current-row
                     style="width: 100%">
                 <el-table-column
-                        align="center"
-                        type="selection"
-                        width="40">
-                </el-table-column>
-                <el-table-column
-                        align="center"
-                        fixed="right"
-                        label="操作"
-                        width="100">
-                    <template slot-scope="scope">
-                        <el-button type="text" @click="editClicked(scope.row)" size="small">编辑</el-button>
+                        type="expand">
+                    <template slot-scope="props">
+                        <el-form label-position="left" inline class="demo-table-expand">
+                            <el-table
+                                    :row-style="subRow"
+                                    ref="subMultipleTable"
+                                    :data="subTableData = props.row.participantVOS"
+                                    style="width: 100%">
+                                <el-table-column
+                                        align="center"
+                                        type="selection"
+                                        width="40">
+                                </el-table-column>
+                                <el-table-column
+                                        align="center"
+                                        fixed="right"
+                                        label="操作"
+                                        width="100">
+                                    <template slot-scope="scope">
+                                        <el-button type="text" @click="editClicked(scope.row)" size="small">编辑</el-button>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="120"
+                                        prop="appName"
+                                        label="应用名">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="120"
+                                        :show-overflow-tooltip=true
+                                        prop="transId"
+                                        label="全局事务ID">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="120"
+                                        prop="participantId"
+                                        label="分支事务ID">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        :show-overflow-tooltip=true
+                                        width="120"
+                                        prop="role"
+                                        label="参与者角色">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="120"
+                                        prop="transType"
+                                        label="模式类型">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="120"
+                                        prop="status"
+                                        label="分支事务状态">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        :show-overflow-tooltip=true
+                                        width="120"
+                                        prop="retry"
+                                        label="重试次数">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        :show-overflow-tooltip=true
+                                        width="120"
+                                        prop="version"
+                                        label="版本">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="120"
+                                        prop="targetClass"
+                                        label="事务接口">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="180"
+                                        prop="targetMethod"
+                                        label="事务方法">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="240"
+                                        :show-overflow-tooltip=true
+                                        prop="confirmMethod"
+                                        label="confirm方法">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        width="120"
+                                        prop="cancelMethod"
+                                        label="cancel方法">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        min-width="200"
+                                        align="center"
+                                        property="createTime"
+                                        label="创建时间">
+                                </el-table-column>
+                                <el-table-column
+                                        label-class-name="subTableHeaderFont"
+                                        min-width="200"
+                                        align="center"
+                                        property="updateTime"
+                                        label="最后执行时间">
+                                </el-table-column>
+                            </el-table>
+                        </el-form>
+                        <el-dialog title="改变重试次数" :visible.sync="dialogFormVisible">
+                            <el-form :model="form">
+                                <div style="margin-left: 0px;width: 80%">
+                                    <el-form-item label="重试次数：" :label-width="formLabelWidth">
+                                        <el-input v-model="form.newRetryCount" auto-complete="off"></el-input>
+                                    </el-form-item>
+                                </div>
+                            </el-form>
+                            <div slot="footer" class="dialog-footer">
+                                <el-button @click="dialogFormVisible = false">取 消</el-button>
+                                <el-button type="primary" @click="updateRetryCount">确 定</el-button>
+                            </div>
+                        </el-dialog>
                     </template>
                 </el-table-column>
                 <el-table-column
                         property="transId"
-                        width="180"
+                        min-width="120"
                         align="center"
-                        label="ID">
+                        label="全局事务ID">
                 </el-table-column>
                 <el-table-column
-                        width="120"
-                        property="retriedCount"
+                        min-width="120"
+                        property="transType"
                         align="center"
-                        label="重试次数">
-                </el-table-column>
-                <el-table-column
-                        align="center"
-                        width="120"
-                        :show-overflow-tooltip=true
-                        property="version"
-                        label="版本">
+                        label="模式类型">
                 </el-table-column>
                 <el-table-column
                         align="center"
+                        min-width="120"
+                        property="status"
+                        label="事务状态">
+                </el-table-column>
+                <el-table-column
+                        align="center"
+                        min-width="120"
+                        property="participationsNum"
+                        label="事务分支数">
+                </el-table-column>
+                <el-table-column
                         min-width="200"
-                        :show-overflow-tooltip=true
-                        property="targetClass"
-                        label="事务接口">
-                </el-table-column>
-                <el-table-column
                         align="center"
-                        min-width="200"
-                        :show-overflow-tooltip=true
-                        property="targetMethod"
-                        label="事务方法">
-                </el-table-column>
-                <el-table-column
-                        align="center"
-                        min-width="200"
-                        :show-overflow-tooltip=true
-                        property="confirmMethod"
-                        label="confirm方法">
-                </el-table-column>
-                <el-table-column
-                        align="center"
-                        min-width="200"
-                        :show-overflow-tooltip=true
-                        property="cancelMethod"
-                        label="cancel方法">
-                </el-table-column>
-                <el-table-column
-                        width="200"
-                        align="center"
-                        :show-overflow-tooltip=true
                         property="createTime"
                         label="创建时间">
                 </el-table-column>
                 <el-table-column
-                        width="240"
+                        min-width="200"
                         align="center"
-                        property="lastTime"
+                        property="updateTime"
                         label="最后执行时间">
                 </el-table-column>
             </el-table>
@@ -123,7 +246,6 @@
             </div>
         </div>
         <!-- Form -->
-
         <el-dialog title="改变重试次数" :visible.sync="dialogFormVisible">
             <el-form :model="form">
                 <div style="margin-left: 0px;width: 80%">
@@ -149,24 +271,33 @@
             return {
 
                 tableData: [],
+                subTableData: [],
                 searchValue: "",
                 paging: {
                     limit: 10,
-                    currentPage: 1,
+                    currentPage: 1
                 },
                 count: 0,
                 res: null,
                 options: [],
+                statusLists:["RUN","SUCCESS","FAILURE"],
+                typeLists:["TCC","AT"],
                 selected: "",
                 retryCount: '',
                 txGroupId: "",
+                transId: "",
+                transType: "",
+                createTime: "",
+                updateTime: "",
+                status: "",
+                participantId: "",
                 //更改重试次数
                 dialogFormVisible: false,
                 form: {
                     newRetryCount: null
                 },
                 formLabelWidth: '120px',
-                currentRow:null,
+                currentRow: null,
                 baseUrl: document.getElementById('serverIpAddress').href
             }
         },
@@ -174,27 +305,26 @@
             ElButton,
             headTop,
         },
-        created() {
-            this.$http.post(this.baseUrl + '/compensate/listAppName', {}).then(
-                response => {
-                    if (response.body.code == 200 && response.body.data != null) {
-                        this.options = response.body.data;
-                        this.selected = this.options[0];
-                    } else {
-                        this.$message({
-                            type: 'error',
-                            message: '获取数据失败或者数据为空!'
-                        });
-                    }
-                    console.log("success!");
-                },
-                response => {
-                    this.$message({
+        created: function created() {
+            var _this = this;
+
+            this.$http.get(this.baseUrl + '/application/listAppName', {}).then(function (response) {
+                if (response.body.code == 200 && response.body.data != null) {
+                    _this.options = response.body.data;
+                    _this.selected = _this.options[0];
+                } else {
+                    _this.$message({
                         type: 'error',
-                        message: response
+                        message: '获取数据失败或者数据为空!'
                     });
                 }
-            );
+                console.log("success!");
+            }, function (response) {
+                _this.$message({
+                    type: 'error',
+                    message: response
+                });
+            });
         },
         methods: {
             editClicked(row) {
@@ -203,10 +333,10 @@
             },
             updateRetryCount: function () {
                 let tData = this.tableData;
-                this.$http.post(this.baseUrl + '/compensate/update', {
-                    "applicationName": this.selected,
+                this.$http.post(this.baseUrl + '/repository/updateHmilyParticipantRetry', {
+                    "appName": this.selected,
                     "retry": this.form.newRetryCount,
-                    "id": this.currentRow.transId
+                    "id": this.currentRow.participantId
                 }).then(
                     response => {
                         if (response.body.code == 200) {
@@ -237,49 +367,51 @@
                     }
                 )
             },
-            query: function () {
-                this.$http.post(this.baseUrl + '/compensate/listPage', {
-                    "pageParameter": {
-                        "pageSize": this.paging.limit,
-                    },
-                    "applicationName": this.selected,
-                    "retry": this.retryCount,
-                    "transId": this.transId
-                }).then(
-                    response => {
-                        if (response.body.code == 200 && response.body.data != null) {
-                            let rp = response.body;
-                            this.count = rp.data.page.totalCount;
-                            this.tableData = rp.data.dataList
-                        } else {
-                            this.$message({
-                                type: 'error',
-                                message: '获取数据失败或者数据为空!'
-                            });
-                        }
+            query: function query() {
+                var _this3 = this;
 
-                        console.log("success!");
+                this.$http.post(this.baseUrl + '/repository/listPage', {
+                    "pageParameter": {
+                        "currentPage": this.paging.currentPage,
+                        "pageSize": this.paging.limit
                     },
-                    response => {
-                        this.$message({
+                    "appName": this.selected,
+                    "transType": this.transType,
+                    "createTime": this.createTime,
+                    "updateTime": this.updateTime,
+                    "status": this.status
+                }).then(function (response) {
+                    if (response.body.code == 200 && response.body.data != null) {
+                        var rp = response.body;
+                        _this3.count = rp.data.page.totalCount;
+                        _this3.tableData = rp.data.dataList;
+                    } else {
+                        _this3.$message({
                             type: 'error',
-                            message: response
+                            message: '获取数据失败或者数据为空!'
                         });
                     }
-                )
+
+                    console.log("success!");
+                }, function (response) {
+                    _this3.$message({
+                        type: 'error',
+                        message: response
+                    });
+                });
             },
             deleteAll: function () {
-                var Selection = this.$refs.multipleTable.selection;
+                var Selection = this.$refs.subMultipleTable.selection;
                 var groupIds = [];
                 var slen = Selection.length;
                 for (var i = 0; i < slen; i++) {
-                    groupIds.push(Selection[i].transId);
+                    groupIds.push(Selection[i].participantId);
                 }
                 //delete row and update tableData but don't send post request to update all data
-                var oldTableData = this.tableData;
+                var oldTableData = this.$refs.subMultipleTable;
                 var tlen = oldTableData.length;
-                this.$http.post(this.baseUrl + '/compensate/batchRemove', {
-                    "applicationName": this.selected,
+                this.$http.post(this.baseUrl + '/repository/batchRemoveHmilyParticipant', {
+                    "appName": this.selected,
                     "ids": groupIds
                 }).then(
                     response => {
@@ -287,13 +419,13 @@
                             this.$message({type: 'success', message: '删除数据成功!'});
                             for (let x = 0; x < slen; x++) {
                                 for (let j = 0; j < tlen; j++) {
-                                    if (groupIds[x] == oldTableData[j].transId) {
+                                    if (groupIds[x] == oldTableData[j].participantId) {
                                         oldTableData.splice(j, 1);
                                         tlen = tlen - 1;
                                     }
                                 }
                             }
-                            this.count = this.count - slen;
+                            this.subTableData = oldTableData;
                         } else {
                             this.$message({
                                 type: 'error',
@@ -310,52 +442,54 @@
                 )
 
             },
-            subRow: function () {
-                return {"font-size": "0.85em"};
+            subRow: function subRow() {
+                return { "font-size": "0.85em" };
             },
-            subTableHeader: function () {
-                return {"background-color": "red", "font-size": "0.6em"};
+            subTableHeader: function subTableHeader() {
+                return { "background-color": "red", "font-size": "0.6em" };
             },
-            handleSizeChange(val) {
+            handleSizeChange: function handleSizeChange(val) {
                 this.paging.limit = val;
             },
-            handleCurrentChange(val) {
+            handleCurrentChange: function handleCurrentChange(val) {
                 this.paging.currentPage = val;
-            },
+            }
         },
         watch: {
             paging: {
-                handler: function () {
-                    this.$http.post(this.baseUrl + '/compensate/listPage', {
+                handler: function handler() {
+                    var _this5 = this;
+
+                    this.$http.post(this.baseUrl + '/repository/listPage', {
                         "pageParameter": {
                             "currentPage": this.paging.currentPage,
-                            "pageSize": this.paging.limit,
+                            "pageSize": this.paging.limit
                         },
-                        "applicationName": this.selected,
+                        "appName": this.selected,
                         "retry": this.retryCount,
-                        "transId": this.transId
-                    }).then(
-                        response => {
-                            if (response.body.code == 200) {
-                                let rp = response.body;
-                                this.count = rp.data.page.totalCount;
-                                this.tableData = rp.data.dataList
-                            } else {
-                                this.$message({
-                                    type: 'error',
-                                    message: '获取数据失败!'
-                                });
-                            }
-
-                            console.log("success!");
-                        },
-                        response => {
-                            this.$message({
+                        "transType": this.transType,
+                        "createTime": this.createTime,
+                        "updateTime": this.updateTime,
+                        "status": this.status
+                    }).then(function (response) {
+                        if (response.body.code == 200) {
+                            var rp = response.body;
+                            _this5.count = rp.data.page.totalCount;
+                            _this5.tableData = rp.data.dataList;
+                        } else {
+                            _this5.$message({
                                 type: 'error',
-                                message: response
+                                message: '获取数据失败!'
                             });
                         }
-                    )
+
+                        console.log("success!");
+                    }, function (response) {
+                        _this5.$message({
+                            type: 'error',
+                            message: response
+                        });
+                    });
                 },
                 deep: true
             }
