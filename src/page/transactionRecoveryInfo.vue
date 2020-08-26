@@ -67,7 +67,8 @@
                             <el-table
                                     :row-style="subRow"
                                     ref="subMultipleTable"
-                                    :data="subTableData = props.row.participantVOS"
+                                    :data="props.row.participantVOS"
+                                    @selection-change="(v) => handleChange(v, props.row.transId)"
                                     style="width: 100%">
                                 <el-table-column
                                         align="center"
@@ -291,6 +292,7 @@
                 updateTime: "",
                 status: "",
                 participantId: "",
+                selectedRowMap: new Map(),
                 //更改重试次数
                 dialogFormVisible: false,
                 form: {
@@ -331,6 +333,10 @@
                 this.dialogFormVisible = true;
                 this.currentRow = row;
             },
+            handleChange(selectedRow, rowId) {
+                console.log(selectedRow, rowId);
+                this.selectedRowMap.set(rowId, selectedRow);
+            },
             updateRetryCount: function () {
                 let tData = this.tableData;
                 this.$http.post(this.baseUrl + '/repository/updateHmilyParticipantRetry', {
@@ -340,13 +346,15 @@
                 }).then(
                     response => {
                         if (response.body.code == 200) {
-                            for(var i=0,len=tData.length;i<len;i++)
-                            {
-                                if(this.currentRow.id == tData[i].id)
-                                {
-                                    tData[i].retriedCount = this.form.newRetryCount;
+                            this.tableData.forEach(row => {
+                                if (!(row.participantVOS == undefined)) {
+                                    row.participantVOS.forEach(o => {
+                                        if(o.participantId == this.currentRow.participantId) {
+                                            o.retry = this.form.newRetryCount;
+                                        }
+                                    })
                                 }
-                            }
+                            })
                             this.dialogFormVisible = false;
                             this.$message({
                                 type: 'success',
@@ -401,31 +409,24 @@
                 });
             },
             deleteAll: function () {
-                var Selection = this.$refs.subMultipleTable.selection;
                 var groupIds = [];
-                var slen = Selection.length;
-                for (var i = 0; i < slen; i++) {
-                    groupIds.push(Selection[i].participantId);
-                }
-                //delete row and update tableData but don't send post request to update all data
-                var oldTableData = this.$refs.subMultipleTable;
-                var tlen = oldTableData.length;
+                this.tableData.forEach(row => {
+                    if(!(this.selectedRowMap.get(row.transId) == undefined)){
+                        this.selectedRowMap.get(row.transId).forEach(o => {
+                            groupIds.push(o.participantId);
+                        });
+                    }
+                });
+                console.log(groupIds);
                 this.$http.post(this.baseUrl + '/repository/batchRemoveHmilyParticipant', {
-                    "appName": this.selected,
                     "ids": groupIds
                 }).then(
                     response => {
                         if (response.body.code == 200) {
                             this.$message({type: 'success', message: '删除数据成功!'});
-                            for (let x = 0; x < slen; x++) {
-                                for (let j = 0; j < tlen; j++) {
-                                    if (groupIds[x] == oldTableData[j].participantId) {
-                                        oldTableData.splice(j, 1);
-                                        tlen = tlen - 1;
-                                    }
-                                }
-                            }
-                            this.subTableData = oldTableData;
+                            //delete row and update tableData but don't send post request to update all data
+                            this.filterData(groupIds);
+                            this.selectedRowMap = new Map();
                         } else {
                             this.$message({
                                 type: 'error',
@@ -441,6 +442,15 @@
                     }
                 )
 
+            },
+            // 过滤删除的数据
+            filterData(groupId) {
+                this.tableData.forEach(row => {
+                    if (row.participantVOS) {
+                        const subTable = row.participantVOS;
+                        row.participantVOS = subTable.filter(sub => !groupId.includes(sub.participantId));
+                    }
+                })
             },
             subRow: function subRow() {
                 return { "font-size": "0.85em" };
