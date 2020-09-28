@@ -4,14 +4,7 @@
         <div class="table_container">
             <div style="margin-top: 15px;margin-bottom: 10px;display: flex;justify-content: flex-start">
                 <div style="margin-left: 2%">
-                    <el-select v-model="selected" placeholder="请选择应用名">
-                        <el-option
-                                v-for="x in options"
-                                :key="x"
-                                :label="x"
-                                :value="x">
-                        </el-option>
-                    </el-select>
+                    <el-input v-model="selected" placeholder="请输入应用名"></el-input>
                 </div>
                 <div style="margin-left: 2%">
                     <el-select v-model="transType" placeholder="事务模式">
@@ -26,10 +19,10 @@
                 <div style="margin-left: 2%">
                     <el-select v-model="status" placeholder="事务状态">
                         <el-option
-                                v-for="x in statusLists"
-                                :key="x"
-                                :label="x"
-                                :value="x">
+                                v-for="option in statusList"
+                                :key="option.value"
+                                :value="option.value"
+                                :label="option.label">
                         </el-option>
                     </el-select>
                 </div>
@@ -82,6 +75,7 @@
                                         width="100">
                                     <template slot-scope="scope">
                                         <el-button type="text" @click="editClicked(scope.row)" size="small">编辑</el-button>
+                                        <el-button type="text" @click="compensationClicked(scope.row)" size="small">补偿</el-button>
                                     </template>
                                 </el-table-column>
                                 <el-table-column
@@ -205,6 +199,12 @@
                         label="模式类型">
                 </el-table-column>
                 <el-table-column
+                        min-width="120"
+                        property="appName"
+                        align="center"
+                        label="发起者">
+                </el-table-column>
+                <el-table-column
                         align="center"
                         min-width="120"
                         property="status"
@@ -281,7 +281,24 @@
                 count: 0,
                 res: null,
                 options: [],
-                statusLists:["RUN","SUCCESS","FAILURE"],
+                statusList:[
+                    {
+                        label: '开始执行try',
+                        value: 'PRE_TRY',
+                    },
+                    {
+                        label: 'confirm阶段',
+                        value: 'CONFIRMING',
+                    },
+                    {
+                        label: 'cancel阶段',
+                        value: 'CANCELING',
+                    },
+                    {
+                        label: '删除状态',
+                        value: 'DELETE',
+                    }
+                ],
                 typeLists:["TCC","AT"],
                 selected: "",
                 retryCount: '',
@@ -300,14 +317,14 @@
                 },
                 formLabelWidth: '120px',
                 currentRow: null,
-                baseUrl: document.getElementById('serverIpAddress').href
+                baseUrl:document.getElementById("httpPath").innerHTML
             }
         },
         components: {
             ElButton,
             headTop,
         },
-        created: function created() {
+        /*created: function created() {
             var _this = this;
 
             this.$http.get(this.baseUrl + '/application/listAppName', {}).then(function (response) {
@@ -327,11 +344,47 @@
                     message: response
                 });
             });
-        },
+        },*/
         methods: {
             editClicked(row) {
                 this.dialogFormVisible = true;
                 this.currentRow = row;
+            },
+            compensationClicked(row) {
+                this.currentRow = row;
+                this.$http.post(this.baseUrl + '/repository/compensationInfo', {
+                    "id": this.currentRow.participantId
+                }).then(
+                    response => {
+                        if (response.body.code == 200) {
+                            const h = this.$createElement;
+                            this.$msgbox({
+                                title: '补偿信息',
+                                message: h(
+                                    'div',
+                                    {
+                                        style: {
+                                            width: '100%',
+                                            wordBreak: 'break-all',
+                                        },
+                                    },
+                                    response.body.data,
+                                ),
+                            });
+                        } else {
+                            this.$message({
+                                type: 'error',
+                                message: response.body.message
+                            });
+                        }
+                    },
+                    response => {
+                        this.$message({
+                            type: 'error',
+                            message: response
+                        });
+                    }
+                )
             },
             handleChange(selectedRow, rowId) {
                 console.log(selectedRow, rowId);
