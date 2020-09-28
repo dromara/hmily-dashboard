@@ -20,7 +20,7 @@
     export default {
     	data(){
     		return {
-                baseUrl: document.getElementById('serverIpAddress').href
+                baseUrl:document.getElementById("httpPath").innerHTML
     		}
     	},
     	created(){
