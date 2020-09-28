@@ -38,7 +38,7 @@
                     ],
                 },
                 showLogin: false,
-                baseUrl: document.getElementById('serverIpAddress').href
+                baseUrl:document.getElementById("httpPath").innerHTML
 
             }
         },
